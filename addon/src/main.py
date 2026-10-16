@@ -406,22 +406,33 @@ def read_env_var(name: str, required: bool = True) -> Optional[str]:
         sys.exit(1)
     return value
 
-
 def create_config() -> Dict[str, Dict[str, Any]]:
     """Create configuration dictionary from environment variables."""
+    mqtt_user = (
+        read_env_var("MQTT_USER", required=False)
+        or read_env_var("MQTT_USERNAME", required=False)
+        or ""
+    )
+    mqtt_password = (
+        read_env_var("MQTT_PASSWORD", required=False)
+        or read_env_var("MQTT_PASS", required=False)
+        or ""
+    )
+
     config: Dict[str, Dict[str, Any]] = {
         "cez": {
             "email": read_env_var("CEZ_EMAIL"),
             "password": read_env_var("CEZ_PASSWORD"),
-            "electrometer_id": read_env_var("CEZ_ELECTROMETER_ID", required=False)
-            or "auto",
+            "electrometer_id": read_env_var(
+                "CEZ_ELECTROMETER_ID", required=False
+            ) or "auto",
             "ean": read_env_var("CEZ_EAN", required=False) or "",
         },
         "mqtt": {
             "host": read_env_var("MQTT_HOST"),
             "port": int(read_env_var("MQTT_PORT", required=False) or "1883"),
-            "username": read_env_var("MQTT_USER", required=False) or "",
-            "password": read_env_var("MQTT_PASSWORD", required=False) or "",
+            "username": mqtt_user,
+            "password": mqtt_password,
         },
     }
 
@@ -429,12 +440,12 @@ def create_config() -> Dict[str, Dict[str, Any]]:
     try:
         electrometers = validate_electrometers_config(electrometers_json)
 
-        # If CEZ_ELECTROMETERS is provided, use it as the canonical list
         if electrometers:
             config["cez"]["electrometers"] = electrometers
         else:
-            # Fall back to single electrometer_id/ean pair for backward compatibility
-            electrometer_id = read_env_var("CEZ_ELECTROMETER_ID", required=False)
+            electrometer_id = read_env_var(
+                "CEZ_ELECTROMETER_ID", required=False
+            )
             ean = read_env_var("CEZ_EAN", required=False)
 
             if electrometer_id and ean:
@@ -442,23 +453,20 @@ def create_config() -> Dict[str, Dict[str, Any]]:
                     {"electrometer_id": electrometer_id, "ean": ean}
                 ]
             elif electrometer_id:
-                # Only electrometer_id provided, ean will be empty
                 config["cez"]["electrometers"] = [
                     {"electrometer_id": electrometer_id, "ean": ""}
                 ]
             else:
-                # No electrometers configured - this should fail validation elsewhere
                 config["cez"]["electrometers"] = []
 
     except ValueError as e:
-        logger.error(f"Invalid electrometers configuration: {e}")
+        logger.error("Invalid electrometers configuration: %s", e)
         sys.exit(1)
 
     if config["cez"]["electrometer_id"] == "auto":
         config["cez"]["electrometer_id"] = None
 
     return config
-
 
 async def main():
     """Main application entry point."""
