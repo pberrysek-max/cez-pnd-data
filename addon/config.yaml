@@ -16,11 +16,15 @@ options:
   electrometer_id: ""
   ean: ""
   electrometers: "[]"
+  mqtt_user: ""
+  mqtt_password: ""
 schema:
   email: str
   password: password
   electrometer_id: str?
   ean: str?
   electrometers: str?
+  mqtt_user: str?
+  mqtt_password: password?
 map:
   - "share:rw"
