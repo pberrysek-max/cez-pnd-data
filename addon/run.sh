@@ -51,8 +51,8 @@ export CEZ_ELECTROMETERS="$(read_option electrometers "[]")"
 
 export MQTT_HOST="${MQTT_HOST:-core-mosquitto}"
 export MQTT_PORT="${MQTT_PORT:-1883}"
-export MQTT_USER="${MQTT_USER:-}"
-export MQTT_PASSWORD="${MQTT_PASSWORD:-}"
+export MQTT_USER="$(read_option mqtt_user "${MQTT_USER:-}")"
+export MQTT_PASSWORD="$(read_option mqtt_password "${MQTT_PASSWORD:-}")"
 
 if [[ -z "${CEZ_EMAIL}" || -z "${CEZ_PASSWORD}" ]]; then
     echo "Error: Missing required add-on options 'email' or 'password'." >&2
